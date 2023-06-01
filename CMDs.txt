@@ -1,0 +1,132 @@
+
+------------------------------MASTER SETUP------------------------------
+
+1. Create a Master Node with t2.medium and Slave Node with t2.micro Ubuntu Server
+
+
+2. Make sure you open the All Traffic for All IPs in both Master and Client
+
+
+3. Now download the Puppetlabs repo for Ubuntu i.e xenial
+
+wget https://apt.puppetlabs.com/puppet-release-bionic.deb
+
+
+4. Import the debian file 
+
+dpkg -i puppet-release-bionic.deb
+
+
+5. Now install the Puppet Server
+
+sudo apt-get install puppetmaster
+
+
+6. Check the Installation of Puppet Master
+
+apt policy puppet-master
+
+
+7. Make the Puppet Master start automatically at boot-time
+
+sudo systemctl enable puppet-master.service
+
+
+8. Check the status of the Puppet Master
+
+sudo systemctl status puppet-master.service
+
+
+9. Go the below path
+
+vi /etc/default/puppet-master
+
+Add the following line below to specify that the Puppet Master must use 256MB of memory
+
+JAVA_ARGS="-Xms512m -Xmx512m"
+
+
+10. Restart the Puppet Master
+
+sudo systemctl restart puppet-master.service
+ 
+
+11. Change the Unconfigured Firewall in OS to allow the port 8140(Puppet Server Port Number)
+
+sudo ufw allow 8140/tcp
+
+
+
+------------------------------CLIENT(AGENT)SETUP------------------------------
+
+1. Now download the Puppetlabs repo for Ubuntu i.e xenial
+
+wget https://apt.puppetlabs.com/puppet-release-bionic.deb
+
+
+2. Import the debian file 
+
+dpkg -i puppet-release-bionic.deb
+
+
+3. Install the Puppet Client
+
+sudo apt-get install puppet
+
+
+4. Add Cross IP Address "Puppet" in Master and Client under /etc/hosts file
+
+In Master: Add the Public IP Address of Client followed by "puppet" , Eg: 18.191.97.215 puppet
+
+Same do that in Client Vice-Versa
+
+
+5. Start the Puppet Client
+
+sudo systemctl start puppet
+
+
+6. Enable the Puppet Client to start at boot-time
+
+sudo systemctl enable puppet
+
+
+------------------------------CERTIFICATES SETUP------------------------------
+
+1. Go to the Puppet Master and check for certificates, which now shows the certificate of client
+
+sudo puppet cert list  
+
+
+2. Sign the Cerificate in Master for the Client, below signs all certificate
+
+sudo puppet cert sign --all
+
+
+3. Now go the path in Puppet Master and create the below path
+
+sudo mkdir -p /etc/puppet/code/environments/production/manifests
+
+
+4. Create a file called  site.pp with below contents in the above path
+
+file {'/tmp/Test.txt':
+	ensure => present,
+	mode => '0644',
+	content => "This works on ${ipaddress_eth0}!\n",
+	}
+	
+	
+5. Now restart the Pupper Master service 
+
+sudo systemctl restart puppet-master.service
+
+
+6. Now in the Puppet Client run below to pull and apply the manifest file 
+
+sudo puppet agent -test
+
+
+7. Now check the file in the /tmp and view the contents
+
+cat Test.txt
